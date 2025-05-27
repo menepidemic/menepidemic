@@ -1,16 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
-import { Shuffle, RotateCcw, Heart } from 'lucide-react';
+import { RotateCcw, Heart, Users } from 'lucide-react';
 import Card from '@/components/Card';
 import LoadingQuote from '@/components/LoadingQuote';
+import PlayerSetup from '@/components/PlayerSetup';
 import { cards, CardData } from '@/data/cards';
 import { Button } from '@/components/ui/button';
 
+interface PlayerData {
+  name: string;
+  shuffledCards: CardData[];
+  currentCardIndex: number;
+  revealedCards: Set<number>;
+}
+
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
-  const [shuffledCards, setShuffledCards] = useState<CardData[]>(cards);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [players, setPlayers] = useState<PlayerData[]>([]);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
   const shuffleArray = <T,>(array: T[]): T[] => {
     const shuffled = [...array];
@@ -21,50 +29,84 @@ const Index = () => {
     return shuffled;
   };
 
-  const handleShuffle = () => {
-    const shuffled = shuffleArray(cards);
-    setShuffledCards(shuffled);
-    setCurrentCardIndex(0);
-    setRevealedCards(new Set());
+  const handleStartGame = (playerNames: string[]) => {
+    const newPlayers: PlayerData[] = playerNames.map(name => ({
+      name,
+      shuffledCards: shuffleArray(cards),
+      currentCardIndex: 0,
+      revealedCards: new Set()
+    }));
+    setPlayers(newPlayers);
+    setCurrentPlayerIndex(0);
+    setGameStarted(true);
   };
 
-  const handleReset = () => {
-    setShuffledCards(cards);
-    setCurrentCardIndex(0);
-    setRevealedCards(new Set());
+  const handleNewGame = () => {
+    setGameStarted(false);
+    setPlayers([]);
+    setCurrentPlayerIndex(0);
   };
 
   const handleCardClick = () => {
-    const currentCard = shuffledCards[currentCardIndex];
-    if (!revealedCards.has(currentCard.id)) {
-      setRevealedCards(prev => new Set(prev).add(currentCard.id));
+    const currentPlayer = players[currentPlayerIndex];
+    const currentCard = currentPlayer.shuffledCards[currentPlayer.currentCardIndex];
+    
+    if (!currentPlayer.revealedCards.has(currentCard.id)) {
+      const newPlayers = [...players];
+      newPlayers[currentPlayerIndex].revealedCards = new Set(currentPlayer.revealedCards).add(currentCard.id);
+      setPlayers(newPlayers);
     } else {
-      // Move to next card
-      if (currentCardIndex < shuffledCards.length - 1) {
-        setCurrentCardIndex(prev => prev + 1);
+      handleNextTurn();
+    }
+  };
+
+  const handleNextTurn = () => {
+    const currentPlayer = players[currentPlayerIndex];
+    
+    if (currentPlayer.currentCardIndex < currentPlayer.shuffledCards.length - 1) {
+      // Move to next card for current player
+      const newPlayers = [...players];
+      newPlayers[currentPlayerIndex].currentCardIndex += 1;
+      setPlayers(newPlayers);
+    } else {
+      // Current player finished all cards, move to next player or end game
+      const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      if (nextPlayerIndex === 0 && players.every(p => p.currentCardIndex === p.shuffledCards.length - 1)) {
+        // All players finished
+        return;
+      }
+      setCurrentPlayerIndex(nextPlayerIndex);
+    }
+  };
+
+  const handlePrevTurn = () => {
+    const currentPlayer = players[currentPlayerIndex];
+    
+    if (currentPlayer.currentCardIndex > 0) {
+      const newPlayers = [...players];
+      newPlayers[currentPlayerIndex].currentCardIndex -= 1;
+      setPlayers(newPlayers);
+    } else {
+      // Go to previous player's last card
+      const prevPlayerIndex = currentPlayerIndex === 0 ? players.length - 1 : currentPlayerIndex - 1;
+      if (players[prevPlayerIndex].currentCardIndex >= 0) {
+        setCurrentPlayerIndex(prevPlayerIndex);
       }
     }
   };
 
-  const handleNextCard = () => {
-    if (currentCardIndex < shuffledCards.length - 1) {
-      setCurrentCardIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrevCard = () => {
-    if (currentCardIndex > 0) {
-      setCurrentCardIndex(prev => prev - 1);
-    }
-  };
-
-  const currentCard = shuffledCards[currentCardIndex];
-  const isCurrentCardRevealed = revealedCards.has(currentCard.id);
-  const progress = ((currentCardIndex + 1) / shuffledCards.length) * 100;
-
   if (isLoading) {
     return <LoadingQuote onLoadingComplete={() => setIsLoading(false)} />;
   }
+
+  if (!gameStarted) {
+    return <PlayerSetup onStartGame={handleStartGame} />;
+  }
+
+  const currentPlayer = players[currentPlayerIndex];
+  const currentCard = currentPlayer.shuffledCards[currentPlayer.currentCardIndex];
+  const isCurrentCardRevealed = currentPlayer.revealedCards.has(currentCard.id);
+  const allPlayersFinished = players.every(p => p.currentCardIndex === p.shuffledCards.length - 1 && p.revealedCards.has(p.shuffledCards[p.currentCardIndex].id));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -81,35 +123,48 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleShuffle}
+                onClick={handleNewGame}
                 className="flex items-center space-x-1"
               >
-                <Shuffle className="w-4 h-4" />
-                <span className="hidden sm:inline">Shuffle</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReset}
-                className="flex items-center space-x-1"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span className="hidden sm:inline">Reset</span>
+                <Users className="w-4 h-4" />
+                <span className="hidden sm:inline">New Game</span>
               </Button>
             </div>
           </div>
           
-          {/* Progress Bar */}
+          {/* Player Info */}
           <div className="mt-3">
             <div className="flex items-center justify-between text-sm text-slate-600 mb-1">
-              <span>Progress</span>
-              <span>{currentCardIndex + 1} of {shuffledCards.length}</span>
+              <span className="font-semibold text-indigo-600">
+                {currentPlayer.name}'s Turn
+              </span>
+              <span>
+                Card {currentPlayer.currentCardIndex + 1} of {currentPlayer.shuffledCards.length}
+              </span>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-indigo-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+            <div className="flex space-x-1">
+              {players.map((player, index) => (
+                <div
+                  key={player.name}
+                  className={`flex-1 h-2 rounded-full transition-all duration-300 ${
+                    index === currentPlayerIndex
+                      ? 'bg-gradient-to-r from-indigo-500 to-blue-500'
+                      : player.currentCardIndex === player.shuffledCards.length - 1
+                      ? 'bg-green-400'
+                      : 'bg-slate-200'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-slate-500 mt-1">
+              {players.map((player, index) => (
+                <span
+                  key={player.name}
+                  className={`${index === currentPlayerIndex ? 'font-semibold text-indigo-600' : ''}`}
+                >
+                  {player.name}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -119,7 +174,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-semibold text-slate-800 mb-2">
-            Meaningful Conversations
+            Question for {currentPlayer.name}
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
             {isCurrentCardRevealed 
@@ -144,20 +199,19 @@ const Index = () => {
         <div className="flex items-center justify-center space-x-4">
           <Button
             variant="outline"
-            onClick={handlePrevCard}
-            disabled={currentCardIndex === 0}
+            onClick={handlePrevTurn}
+            disabled={currentPlayerIndex === 0 && currentPlayer.currentCardIndex === 0}
             className="px-6"
           >
             Previous
           </Button>
           
-          {isCurrentCardRevealed && (
+          {isCurrentCardRevealed && !allPlayersFinished && (
             <Button
-              onClick={handleNextCard}
-              disabled={currentCardIndex === shuffledCards.length - 1}
+              onClick={handleNextTurn}
               className="px-8 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700"
             >
-              {currentCardIndex === shuffledCards.length - 1 ? 'Complete!' : 'Next Card'}
+              Next Turn
             </Button>
           )}
         </div>
@@ -174,17 +228,17 @@ const Index = () => {
         </div>
 
         {/* Completion Message */}
-        {currentCardIndex === shuffledCards.length - 1 && isCurrentCardRevealed && (
+        {allPlayersFinished && (
           <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border border-green-200">
             <div className="text-4xl mb-4">🎉</div>
             <h3 className="text-xl font-semibold text-green-800 mb-2">
-              You've completed all 100 cards!
+              All players have completed their cards!
             </h3>
             <p className="text-green-700 mb-4">
-              You've taken a meaningful step toward deeper connection and vulnerability.
+              You've all taken meaningful steps toward deeper connection and vulnerability.
             </p>
-            <Button onClick={handleReset} className="bg-green-600 hover:bg-green-700">
-              Start Over
+            <Button onClick={handleNewGame} className="bg-green-600 hover:bg-green-700">
+              Start New Game
             </Button>
           </div>
         )}
