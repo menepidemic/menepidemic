@@ -1,15 +1,19 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
+// Replace with your actual GitHub repo name
+const repoName = 'menepidemic.github.io';
+
 export default defineConfig(({ mode }) => ({
-  base: process.env.NODE_ENV === 'production' ? '/' : '/',
+  base: mode === 'production' ? `/${repoName}/` : '/',
   server: {
     host: "::",
     port: 8080,
+  },
+  build: {
+    outDir: 'static/build',
   },
   plugins: [
     react(),
