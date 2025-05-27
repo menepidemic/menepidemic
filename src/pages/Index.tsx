@@ -61,38 +61,56 @@ const Index = () => {
   };
 
   const handleNextTurn = () => {
-    const currentPlayer = players[currentPlayerIndex];
+    // Move to next player
+    const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
     
-    if (currentPlayer.currentCardIndex < currentPlayer.shuffledCards.length - 1) {
-      // Move to next card for current player
+    // If we've completed a full round, advance all players' card indices
+    if (nextPlayerIndex === 0) {
       const newPlayers = [...players];
-      newPlayers[currentPlayerIndex].currentCardIndex += 1;
+      let allPlayersCompleted = true;
+      
+      for (let i = 0; i < newPlayers.length; i++) {
+        if (newPlayers[i].currentCardIndex < newPlayers[i].shuffledCards.length - 1) {
+          newPlayers[i].currentCardIndex += 1;
+          allPlayersCompleted = false;
+        }
+      }
+      
       setPlayers(newPlayers);
-    } else {
-      // Current player finished all cards, move to next player or end game
-      const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
-      if (nextPlayerIndex === 0 && players.every(p => p.currentCardIndex === p.shuffledCards.length - 1)) {
-        // All players finished
+      
+      // If all players have completed all cards, game ends
+      if (allPlayersCompleted) {
         return;
       }
-      setCurrentPlayerIndex(nextPlayerIndex);
     }
+    
+    setCurrentPlayerIndex(nextPlayerIndex);
   };
 
   const handlePrevTurn = () => {
-    const currentPlayer = players[currentPlayerIndex];
+    // Move to previous player
+    const prevPlayerIndex = currentPlayerIndex === 0 ? players.length - 1 : currentPlayerIndex - 1;
     
-    if (currentPlayer.currentCardIndex > 0) {
+    // If we're going back from the first player, go back a round
+    if (currentPlayerIndex === 0) {
       const newPlayers = [...players];
-      newPlayers[currentPlayerIndex].currentCardIndex -= 1;
-      setPlayers(newPlayers);
-    } else {
-      // Go to previous player's last card
-      const prevPlayerIndex = currentPlayerIndex === 0 ? players.length - 1 : currentPlayerIndex - 1;
-      if (players[prevPlayerIndex].currentCardIndex >= 0) {
-        setCurrentPlayerIndex(prevPlayerIndex);
+      let canGoBack = false;
+      
+      for (let i = 0; i < newPlayers.length; i++) {
+        if (newPlayers[i].currentCardIndex > 0) {
+          newPlayers[i].currentCardIndex -= 1;
+          canGoBack = true;
+        }
+      }
+      
+      if (canGoBack) {
+        setPlayers(newPlayers);
+      } else {
+        return; // Can't go back further
       }
     }
+    
+    setCurrentPlayerIndex(prevPlayerIndex);
   };
 
   if (isLoading) {
@@ -139,7 +157,7 @@ const Index = () => {
                 {currentPlayer.name}'s Turn
               </span>
               <span>
-                Card {currentPlayer.currentCardIndex + 1} of {currentPlayer.shuffledCards.length}
+                Round {currentPlayer.currentCardIndex + 1} of {currentPlayer.shuffledCards.length}
               </span>
             </div>
             <div className="flex space-x-1">
@@ -200,7 +218,7 @@ const Index = () => {
           <Button
             variant="outline"
             onClick={handlePrevTurn}
-            disabled={currentPlayerIndex === 0 && currentPlayer.currentCardIndex === 0}
+            disabled={currentPlayerIndex === 0 && players.every(p => p.currentCardIndex === 0)}
             className="px-6"
           >
             Previous

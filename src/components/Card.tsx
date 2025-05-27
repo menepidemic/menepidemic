@@ -28,8 +28,8 @@ const Card: React.FC<CardProps> = ({ id, category, question, isRevealed, onClick
         {/* Card Back */}
         <div className="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl border border-slate-700">
           <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <div className="text-6xl font-bold text-slate-400 mb-4">
-              {id}
+            <div className="text-6xl mb-4">
+              ❤️
             </div>
             <div className="text-slate-300 text-sm font-medium tracking-wide uppercase">
               Tap to reveal
@@ -47,9 +47,6 @@ const Card: React.FC<CardProps> = ({ id, category, question, isRevealed, onClick
               <p className="text-slate-800 text-lg leading-relaxed font-medium">
                 {question}
               </p>
-            </div>
-            <div className="text-xs text-slate-500 text-center mt-4">
-              Card {id} of 100
             </div>
           </div>
         </div>
