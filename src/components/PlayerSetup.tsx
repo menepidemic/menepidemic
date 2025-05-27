@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +10,25 @@ interface PlayerSetupProps {
 
 const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
   const [players, setPlayers] = useState<string[]>(['']);
+  const [randomQuote, setRandomQuote] = useState<string>('');
+  
+  const motivationalQuotes = [
+    "True rulers master vulnerability—tell me the fear you never voice and watch it lose its power.",
+    "If secrecy is your armor, prove your strength by dropping it—what truth hides beneath the steel?",
+    "Command the room by confessing the ache you bury; silence only obeys the brave who break it.",
+    "Kings are crowned in daylight, but legends are made in the dark—name the shadow inside you.",
+    "Power is persuasion—sway me with the raw, unfiltered story you've never let escape your chest.",
+    "You bend the world to your will—now tame yourself by voicing the midnight thought that won't stay silent.",
+    "Empires fear no enemy like an unhealed wound; name yours and watch your dominion double.",
+    "Trade the currency of stoicism for a single raw confession—see how fast the room pays attention.",
+    "A chained heart drags a crowned head; unlock both with one sentence of unfiltered truth.",
+    "Suspend conquest for a moment and conquer the crucible within: speak the regret behind your victorious grin."
+  ];
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+    setRandomQuote(motivationalQuotes[randomIndex]);
+  }, []);
   
   const addPlayer = () => {
     if (players.length < 30) {
@@ -44,6 +62,13 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
           <Users className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Setup Players</h1>
           <p className="text-slate-600">Enter the names of everyone who will be playing</p>
+          
+          {/* Random motivational quote */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 rounded-r-lg">
+            <p className="text-md font-medium text-amber-800 bold leading-relaxed">
+              "{randomQuote}"
+            </p>
+          </div>
         </div>
         
         <div className="space-y-4 max-h-96 overflow-y-auto mb-6">
