@@ -13,7 +13,7 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
   const [players, setPlayers] = useState<string[]>(['']);
   
   const addPlayer = () => {
-    if (players.length < 8) {
+    if (players.length < 30) {
       setPlayers([...players, '']);
     }
   };
@@ -39,14 +39,14 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-white/50 max-w-md w-full">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-white/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="text-center mb-8">
           <Users className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Setup Players</h1>
           <p className="text-slate-600">Enter the names of everyone who will be playing</p>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-96 overflow-y-auto mb-6">
           {players.map((player, index) => (
             <div key={index} className="flex items-center space-x-2">
               <div className="flex-1">
@@ -76,11 +76,11 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
           ))}
         </div>
         
-        <div className="flex justify-between items-center mt-6">
+        <div className="flex justify-between items-center">
           <Button
             variant="outline"
             onClick={addPlayer}
-            disabled={players.length >= 8}
+            disabled={players.length >= 30}
             className="flex items-center space-x-2"
           >
             <Plus className="w-4 h-4" />
@@ -97,7 +97,7 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
         </div>
         
         <p className="text-xs text-slate-500 text-center mt-4">
-          Add 1-8 players to begin
+          Add 1-30 players to begin
         </p>
       </div>
     </div>
